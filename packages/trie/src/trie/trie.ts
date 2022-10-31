@@ -973,24 +973,3 @@ export class Trie<DBType extends DB = DB> {
     this._db.checkpoints = []
   }
 }
-
-type MyType = {
-  get: (key: Buffer) => Promise<Buffer | null>
-  put: (key: Buffer) => Promise<void>
-  del: (key: Buffer) => Promise<void>
-  batch: (opStack: BatchDBOp[]) => Promise<void>
-  copy: () => MyType
-  another: string
-}
-class GanacheTrie extends Trie<MyType> {
-  constructor(db: MyType) {
-    const opts: TrieOpts<MyType> = { db }
-    super(opts)
-  }
-}
-const thing: MyType = '' as any
-const opts = {}
-const mine = new Trie(opts)
-mine.database().db
-const trie = new GanacheTrie(thing)
-trie.database().db.another
