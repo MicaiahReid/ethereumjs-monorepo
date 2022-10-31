@@ -25,6 +25,7 @@ export interface TrieOpts<DBType extends DB = DB> {
    * A database instance.
    */
   db?: DBType
+
   /**
    * A `Buffer` for the root of a previously stored trie
    */
