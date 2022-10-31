@@ -20,11 +20,11 @@ export type FoundNodeFunction = (
 
 export type HashKeysFunction = (msg: Uint8Array) => Uint8Array
 
-export interface TrieOpts {
+export interface TrieOpts<DBType extends DB = DB> {
   /**
    * A database instance.
    */
-  db?: DB
+  db?: DBType
 
   /**
    * A `Buffer` for the root of a previously stored trie
