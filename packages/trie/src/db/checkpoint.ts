@@ -4,14 +4,14 @@ import type { BatchDBOp, Checkpoint, DB } from '../types'
  * DB is a thin wrapper around the underlying levelup db,
  * which validates inputs and sets encoding type.
  */
-export class CheckpointDB implements DB {
+export class CheckpointDB<DBType extends DB> {
   public checkpoints: Checkpoint[]
-  public db: DB
+  public db: DBType
 
   /**
    * Initialize a DB instance.
    */
-  constructor(db: DB) {
+  constructor(db: DBType) {
     this.db = db
     // Roots of trie at the moment of checkpoint
     this.checkpoints = []
@@ -154,7 +154,7 @@ export class CheckpointDB implements DB {
   /**
    * @inheritDoc
    */
-  copy(): CheckpointDB {
+  copy(): CheckpointDB<DBType> {
     return new CheckpointDB(this.db)
   }
 }

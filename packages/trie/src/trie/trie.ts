@@ -30,12 +30,14 @@ interface Path {
   stack: TrieNode[]
 }
 
+type GenericDB<DBType> = DBType extends undefined ? MapDB : DBType
+
 /**
  * The basic trie interface, use with `import { Trie } from '@ethereumjs/trie'`.
  * In Ethereum applications stick with the {@link SecureTrie} overlay.
  * The API for the base and the secure interface are about the same.
  */
-export class Trie {
+export class Trie<DBType extends DB = DB> {
   private readonly _opts: TrieOptsWithDefaults = {
     useKeyHashing: false,
     useKeyHashingFunction: keccak256,
@@ -47,7 +49,7 @@ export class Trie {
   EMPTY_TRIE_ROOT: Buffer
 
   /** The backend DB */
-  protected _db!: CheckpointDB
+  protected _db!: CheckpointDB<GenericDB<DBType>>
   protected _hashLen: number
   protected _lock = new Lock()
   protected _root: Buffer
@@ -56,12 +58,16 @@ export class Trie {
    * Create a new trie
    * @param opts Options for instantiating the trie
    */
-  constructor(opts?: TrieOpts) {
+  constructor(opts?: TrieOpts<DBType>) {
     if (opts !== undefined) {
       this._opts = { ...this._opts, ...opts }
     }
 
-    this.database(opts?.db ?? new MapDB())
+    if (opts?.db) {
+      this.database(<GenericDB<DBType>>opts.db)
+    } else {
+      this.database(<GenericDB<DBType>>new MapDB())
+    }
 
     this.EMPTY_TRIE_ROOT = this.hash(RLP_EMPTY_STRING)
     this._hashLen = this.EMPTY_TRIE_ROOT.length
@@ -92,7 +98,7 @@ export class Trie {
     return new Trie(opts)
   }
 
-  database(db?: DB) {
+  database(db?: GenericDB<DBType>) {
     if (db !== undefined) {
       if (db instanceof CheckpointDB) {
         throw new Error('Cannot pass in an instance of CheckpointDB')
@@ -857,10 +863,10 @@ export class Trie {
    * Returns a copy of the underlying trie.
    * @param includeCheckpoints - If true and during a checkpoint, the copy will contain the checkpointing metadata and will use the same scratch as underlying db.
    */
-  copy(includeCheckpoints = true): Trie {
-    const trie = new Trie({
+  copy(includeCheckpoints = true): Trie<DBType> {
+    const trie = new Trie<DBType>({
       ...this._opts,
-      db: this._db.db.copy(),
+      db: <DBType>this._db.db.copy(),
       root: this.root(),
     })
     if (includeCheckpoints && this.hasCheckpoints()) {
@@ -967,3 +973,24 @@ export class Trie {
     this._db.checkpoints = []
   }
 }
+
+type MyType = {
+  get: (key: Buffer) => Promise<Buffer | null>
+  put: (key: Buffer) => Promise<void>
+  del: (key: Buffer) => Promise<void>
+  batch: (opStack: BatchDBOp[]) => Promise<void>
+  copy: () => MyType
+  another: string
+}
+class GanacheTrie extends Trie<MyType> {
+  constructor(db: MyType) {
+    const opts: TrieOpts<MyType> = { db }
+    super(opts)
+  }
+}
+const thing: MyType = '' as any
+const opts = {}
+const mine = new Trie(opts)
+mine.database().db
+const trie = new GanacheTrie(thing)
+trie.database().db.another
