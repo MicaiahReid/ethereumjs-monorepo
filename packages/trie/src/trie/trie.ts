@@ -863,10 +863,10 @@ export class Trie<DBType extends DB = DB> {
    * Returns a copy of the underlying trie.
    * @param includeCheckpoints - If true and during a checkpoint, the copy will contain the checkpointing metadata and will use the same scratch as underlying db.
    */
-  copy(includeCheckpoints = true): Trie<DBType> {
-    const trie = new Trie<DBType>({
+  copy(includeCheckpoints = true): Trie {
+    const trie = new Trie({
       ...this._opts,
-      db: <DBType>this._db.db.copy(),
+      db: this._db.db.copy(),
       root: this.root(),
     })
     if (includeCheckpoints && this.hasCheckpoints()) {
